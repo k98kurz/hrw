@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hrw"
+version = "0.1.0"
+authors = [
+  { name="k98kurz", email="k98kurz@gmail.com" },
+]
+description = "Highest random weight/rendezvous hashing for load balancing between replicas."
+readme = "readme.md"
+requires-python = ">=3.7"
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: ISC License (ISCL)",
+  "Operating System :: OS Independent",
+  "Topic :: System :: Distributed Computing"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/k98kurz/hrw"
+"Bug Tracker" = "https://github.com/k98kurz/hrw/issues"
