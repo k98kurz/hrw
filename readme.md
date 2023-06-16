@@ -30,8 +30,15 @@ pip install hrw
 ## Usage
 
 The simplest method for using this algorithm is to use the `choose` function
-specifying just the `content_id` and the `replica_ids`. Doing so will return a
-deterministic, dynamically-sized list of replica IDs.
+specifying just the `content_id` and the `replica_ids`. Doing so will return 2
+deterministic, dynamically-sized lists of replica IDs: the first list is the
+replicas that should store/cache the content, and the second list is the rest of
+the replicas ordered by the likelihood they have the content. This second list
+is useful as a fallback: in case none of the chosen replicas have the content,
+possibly due to their recent entry into the network, the remaining replicas can
+be queried in order of descending likelihood of success. For load balancing
+purposes, the order of chosen replica IDs should be shuffled before querying,
+but the order of fallback replicas should remain ordered for resilience.
 
 ```python
 from hashlib import sha256
@@ -48,19 +55,38 @@ content = b'Lorem ipsum dolor sit amet, something something darkside.'
 content_id = sha256(content).digest()
 
 # choose a subset of replicas for storage/caching of the content
-chosen_replica_ids = choose(content_id, replica_ids)
+chosen_replica_ids, remaining_replica_ids = choose(content_id, replica_ids)
 
 # should print twelve
 print([crid.hex() for crid in chosen_replica_ids])
 
 expected = ['004c', '006d', '0047', '004e', '00ee', '008b', '00be', '0016', '0064', '00e2', '0055', '002f']
 assert [crid.hex() for crid in chosen_replica_ids] == expected
+
+# should print 244
+print(len(remaining_replica_ids))
 ```
 
-To set the number of replicas to be chosen, supply the int argument `k`:
+To set the number of replicas to be chosen, supply the named int argument `k`:
 
 ```python
 choose(content_id, replica_ids, k=3)
+```
+
+If you want simply to order the replicas, use the `sort` method:
+
+```python
+from hrw import sort
+
+
+replica_ids = [i.to_bytes(2) for i in range(12)]
+content_id = b'0123456789abcdef'
+ordered = sort(content_id, replica_ids)
+
+print([rid.hex() for rid in ordered])
+
+expected = ['0009', '000b', '0006', '0002', '0003', '0004', '0008', '000a', '0001', '0000', '0005', '0007']
+assert [rid.hex() for rid in ordered] == expected
 ```
 
 To use a different hashing algorithm, supply the argument `hash_function`:
@@ -74,20 +100,31 @@ hash_func = lambda preimage: shake_256(preimage).digest(20)
 replica_ids = [i.to_bytes(2) for i in range(256)]
 content = b'Lorem ipsum dolor sit amet, something something darkside.'
 content_id = hash_func(content)
-chosen_replica_ids = choose(content_id, replica_ids, hash_function=hash_func)
+chosen_replica_ids, remaining_replica_ids = choose(content_id, replica_ids, hash_function=hash_func)
 
 # should print twelve
 print([crid.hex() for crid in chosen_replica_ids])
 expected = ['00e2', '0061', '000a', '0099', '0024', '00aa', '00bd', '0017', '006b', '00cd', '0079', '00e1']
 assert [crid.hex() for crid in chosen_replica_ids] == expected
+
+# should print 244
+print(len(remaining_replica_ids))
 ```
 
-To return a sorted list of all replica IDs, simply set k to the number of
-replicas: `choose(content_id, replica_ids, k=len(replica_ids))`. To calculate
-the number of replicas at which a piece of content should be stored, use the
-`calculate_k` function: `k = calculate_k(replica_ids)`.
+To calculate the number of replicas at which a piece of content should be stored,
+use the `calculate_k` function: `k = calculate_k(replica_ids)`.
 
 Raises `TypeError` or `ValueError` for invalid arguments.
+
+## Testing
+
+To test, clone the repository and run the following:
+
+```bash
+python tests/test_functions.py
+```
+
+There are currently 11 tests that document the behavior of the package.
 
 ## ISC License
 
