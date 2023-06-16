@@ -82,6 +82,11 @@ expected = ['00e2', '0061', '000a', '0099', '0024', '00aa', '00bd', '0017', '006
 assert [crid.hex() for crid in chosen_replica_ids] == expected
 ```
 
+To return a sorted list of all replica IDs, simply set k to the number of
+replicas: `choose(content_id, replica_ids, k=len(replica_ids))`. To calculate
+the number of replicas at which a piece of content should be stored, use the
+`calculate_k` function: `k = calculate_k(replica_ids)`.
+
 Raises `TypeError` or `ValueError` for invalid arguments.
 
 ## ISC License
