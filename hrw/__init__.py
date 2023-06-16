@@ -1,1 +1,1 @@
-from .functions import choose, calculate_k
+from .functions import choose, calculate_k, sort
